@@ -1,0 +1,30 @@
+.color{
+  color:#a9a9a9;
+  margin-left: 0.5em;
+}
+
+.navbar > .container-fluid > .navbar-collapse > form{
+  display: flex;
+  justify-content: center;
+}
+
+.navbar > .container-fluid > .navbar-collapse > form > .row >#button {
+  margin-top: 1em;
+  text-align: center;
+}
+
+/*  @media (max-width: 596px) {
+  .row {
+    display: block;
+  }
+  .container > .row > .form > form > .row > #inputcuston {
+    margin-top: 1em;
+  }
+
+  .container > .row > .form > form > .row > #button{
+    margin-top: 1em;
+  }
+
+
+  
+} */
