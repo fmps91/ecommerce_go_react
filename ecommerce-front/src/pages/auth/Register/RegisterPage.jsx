@@ -10,6 +10,7 @@ import { APP_ROUTES } from '../../../core/constants/api.routes';
 import { useAuth } from '../../../contexts/AuthContext';
 
 //import { Form, Button, Card } from 'bootstrap';
+import { useApp } from '../../../contexts/AppContext';
 
 const RegisterPage = () => {
   
@@ -21,23 +22,48 @@ const RegisterPage = () => {
   } = useFormRegister();
 
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { getme,loading,routes, user } = useApp();
+
 
   useEffect(() => {
+    getme()
+    //console.log("user: ",user)
     if (user) {
-      navigate(APP_ROUTES.PUBLIC.PRODUCTS, { 
+      navigate(APP_ROUTES.PUBLIC.HOME.link,{ 
         replace: true,
         state: { forceRefresh: true } // Puedes usar este estado para forzar recarga
       });
     }
   }, [user, navigate]); 
 
+  const handleSearch = async(e) => {
+    localStorage.setItem("term",e)
+    /* navigate(APP_ROUTES.PUBLIC.HOME.link,{ 
+      replace: true,
+      state: { forceRefresh: true } // Puedes usar este estado para forzar recarga
+    }); */
+  };
 
   return (
     <div className="container auth-container py-5">
-      <Navbar
-        ///onSearch={handleSearch}
+      {loading ==true ?
+         <div key="spin1" className="text-center my-5">
+         <div className="spinner-border" role="status">
+         </div>
+       </div>
+       :
+       <div key="" >
+       <div className="" role="">
+         <h2>si tiene algo</h2>
+         <p>{routes?.length}</p>
+         <Navbar
+        onSearch={handleSearch}
+        routes={routes}
       />
+       </div>
+     </div>
+
+      }
       <div className="card auth-card">
         <div className="card-body">
           <div className="text-center mb-4">

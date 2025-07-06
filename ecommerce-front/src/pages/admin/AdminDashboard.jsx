@@ -1,136 +1,110 @@
 import { useState, useEffect } from 'react';
 //import { Card, Container, Row, Col } from 'bootstrap';
-import { 
-  FaBoxes, 
-  FaUsers, 
-  FaDollarSign, 
-  FaChartLine 
+import {
+  FaBoxes,
+  FaUsers,
+  FaDollarSign,
+  FaChartLine
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { APP_ROUTES } from '../../core/constants/api.routes';
+import Navbar from '../../components/navbar/navbar';
+import { useApp } from '../../contexts/AppContext';
 import { OrderService } from '../../core/services/order.service';
 import { ProductService } from '../../core/services/product.service';
 import { UserService } from '../../core/services/user.service';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({
-    totalProducts: 0,
-    totalUsers: 0,
-    totalOrders: 0,
-    totalRevenue: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const options = [
+    {
+      title: "Gestion de Usuarios",
+      description: "es la administracion de los usuarios",
+      icon: "bi bi-star",
+      //features: ["Obtener Usuario", "Obtener usuarios", "Función básica"],
+      buttonText: "Seleccionar",
+      isFeatured: false,
+      link: "/admin/users"
+    },
+    {
+      title: "Gestion de Productos",
+      description: "es la administracion de los productos",
+      icon: "bi bi-gem",
+      //features: ["Todas las funciones básicas", "Función premium 1", "Función premium 2", "Soporte prioritario"],
+      buttonText: "Seleccionar",
+      isFeatured: false,
+      link: "/admin/products"
+    },
+    {
+      title: "Gestion de las Ordenes",
+      description: "es la administracion de los ordenes",
+      icon: "bi bi-building",
+      //features: ["Todas las funciones premium", "Personalización", "Soporte 24/7", "Integraciones"],
+      buttonText: "Seleccionar",
+      isFeatured: false,
+      link: "/admin/oders"
+    }
+  ];
+
+  const { user, routes, getme, loading } = useApp();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [productsRes, usersRes, ordersRes] = await Promise.all([
-          ProductService.getAll(),
-          UserService.getAll(),  // <- Esto usa UserService
-          OrderService.getAll()
-        ]);
-
-        const revenue = ordersRes.data.reduce(
-          (sum, order) => sum + order.total, 0
-        );
-
-        setStats({
-          totalProducts: productsRes.data.length,
-          totalUsers: usersRes.data.length,
-          totalOrders: ordersRes.data.length,
-          totalRevenue: revenue
-        });
-      } catch (error) {
-        setError(error.message || 'Failed to load dashboard stats');
-        console.error('Error:', error);
-      
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
+    getme()
+    //console.log("user: ",user)
+    console.log("user: ", user)
   }, []);
 
-  if (loading) {
-    return (
-      <div className="container my-5 text-center">
-  <div className="spinner-border" role="status">
-    <span className="visually-hidden">Loading...</span>
-  </div>
-</div>
-
-    );
-  }
+  const handleSearch = async (e) => {
+    localStorage.setItem("term", e)
+    navigate(APP_ROUTES.PUBLIC.HOME.link,{ 
+      replace: true,
+      state: { forceRefresh: true } // Puedes usar este estado para forzar recarga
+    });
+  };
 
   return (
     <div className="container my-5">
-  <h2 className="mb-4">Admin Dashboard</h2>
-  
-  <div className="row g-4 mb-4">
-    <div className="col-md-3">
-      <div className="card h-100">
-        <div className="card-body">
-          <div className="d-flex align-items-center">
-            <div className="bg-primary bg-opacity-10 p-3 rounded me-3">
-              <FaBoxes size={24} className="text-primary" />
-            </div>
-            <div>
-              <h6 className="mb-0">Total Products</h6>
-              <h3 className="mb-0">{stats.totalProducts}</h3>
-            </div>
+      {loading == true ?
+        <div key="spin1" className="text-center my-5">
+          <div className="spinner-border" role="status">
           </div>
         </div>
-      </div>
-    </div>
-    
-    <div className="col-md-3">
-      <div className="card h-100">
-        <div className="card-body">
-          <div className="d-flex align-items-center">
-            <div className="bg-success bg-opacity-10 p-3 rounded me-3">
-              <FaUsers size={24} className="text-success" />
-            </div>
-            <div>
-              <h6 className="mb-0">Total Users</h6>
-              <h3 className="mb-0">{stats.totalUsers}</h3>
+        :
+
+        <div className="my-2" role="">
+
+          <Navbar
+            onSearch={handleSearch}
+            routes={routes}
+          />
+        </div>
+
+      }
+      <h2 className="text-center mb-4">Administracion del sistema</h2>
+      <div className="row g-4">
+        {options.map((option, index) => (
+          <div key={index} className="col-md-4">
+            <div className={`card h-100 ${option.isFeatured ? 'border-primary shadow-lg' : ''}`}>
+
+              <div className="card-body text-center">
+                <i className={`${option.icon} fs-1 text-primary mb-3`}></i>
+                <h3 className="card-title">{option.title}</h3>
+                <p className="card-text">{option.description}</p>
+
+              </div>
+              <div className="card-footer bg-transparent border-top-0 pb-3">
+                <button className={`btn w-100 ${option.isFeatured ? 'btn-primary' : 'btn-outline-primary'}`} onClick={()=>{
+                  navigate(option.link)
+                  
+                }}>
+                  {option.buttonText}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        ))}
       </div>
     </div>
-    
-    <div className="col-md-3">
-      <div className="card h-100">
-        <div className="card-body">
-          <div className="d-flex align-items-center">
-            <div className="bg-warning bg-opacity-10 p-3 rounded me-3">
-              <FaChartLine size={24} className="text-warning" />
-            </div>
-            <div>
-              <h6 className="mb-0">Total Orders</h6>
-              <h3 className="mb-0">{stats.totalOrders}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div className="col-md-3">
-      <div className="card h-100">
-        <div className="card-body">
-          <div className="d-flex align-items-center">
-            <div className="bg-info bg-opacity-10 p-3 rounded me-3">
-              <FaDollarSign size={24} className="text-info" />
-            </div>
-            <div>
-              <h6 className="mb-0">Total Revenue</h6>
-              <h3 className="mb-0">${stats.totalRevenue.toFixed(2)}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
   );
 };
 

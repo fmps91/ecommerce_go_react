@@ -6,12 +6,19 @@ export const UserService = {
    * Obtiene todos los usuarios (solo admin)
    */
   getAll: async (params = {}) => {
-    try {
-      const response = await api.get(API_ENDPOINTS.USERS.GET_ALL, { params });
+   
+      const queryString = new URLSearchParams();
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryString.append(key, value);
+        }
+      });
+
+      const url = `${API_ENDPOINTS.USERS.GET_ALL}?${queryString.toString()}`;
+      const response = await api.get(url);
       return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
+    
   },
 
   /**
@@ -19,6 +26,7 @@ export const UserService = {
    */
   getById: async (userId) => {
     try {
+      console.log("route: ", `${API_ENDPOINTS.USERS.GET_BY_ID}/${userId}`)
       const response = await api.get(`${API_ENDPOINTS.USERS.GET_BY_ID}/${userId}`);
       return response.data;
     } catch (error) {
@@ -34,6 +42,7 @@ export const UserService = {
       const response = await api.put(`${API_ENDPOINTS.USERS.UPDATE}/${userId}`, userData);
       return response.data;
     } catch (error) {
+      console.log("erro en user update: ",error)
       throw error.response?.data || error.message;
     }
   },
@@ -41,27 +50,18 @@ export const UserService = {
   /**
    * Elimina un usuario (solo admin)
    */
-  delete: async (userId) => {
+  delete_at: async (userId) => {
     try {
-      const response = await api.delete(`${API_ENDPOINTS.USERS.DELETE}/${userId}`);
+      const response = await api.delete(`${API_ENDPOINTS.USERS.DELETE_AT}/${userId}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error.message;
     }
   },
 
-  /**
-   * Cambia el rol de un usuario (admin/normal)
-   */
-  changeRole: async (userId, isAdmin) => {
-    try {
-      const response = await api.patch(
-        `${API_ENDPOINTS.USERS.CHANGE_ROLE}/${userId}`,
-        { is_admin: isAdmin }
-      );
-      return response.data;
-    } catch (error) {
-      throw error.response?.data || error.message;
-    }
-  }
+  delete_db: async (id) => {
+    //console.log("api: ",api.del());
+    const response = await api.del(`${API_ENDPOINTS.USERS.DELETE_DATABASE}/${id}`);
+    return response;
+  },
 };

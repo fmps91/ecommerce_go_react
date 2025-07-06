@@ -53,7 +53,10 @@ const InputCustom = ({
   }, [inputValue, isTouched, required]);
 
   const handleChange = (e) => {
-    const newValue = e.target.value;
+    //console.log("e: ",e)
+    const { name, value, type, checked } = e.target;
+    //console.log("name: ",name, "   value: ",value)
+    const newValue = value;
     setInputValue(newValue);
     onChange && onChange(newValue);
   };

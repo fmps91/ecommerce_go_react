@@ -1,11 +1,11 @@
 // src/hooks/useFormLogin.js
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 import { APP_ROUTES } from '@/core/constants/api.routes';
 import { validarCampo } from '@/utils/validations';
 import { AuthService } from '@/core/services/auth.service';
 import { toast } from 'react-toastify';
+import { useApp } from '../../../../contexts/AppContext';
 
 export const useFormRegister = () => {
   const init = [
@@ -42,7 +42,7 @@ export const useFormRegister = () => {
   const [formData, setFormData] = useState(init);
   const [loading,setLoading]=useState(false);
   const [errors, setErrors] = useState({});
-  const { register } = useAuth();
+  const { register } = useApp();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -94,11 +94,11 @@ export const useFormRegister = () => {
 
       if(success) {
         //console.log("esta es la ruta: ",APP_ROUTES.PRIVATE.PROFILE)
-        navigate(APP_ROUTES.PUBLIC.PRODUCTS, { 
+        navigate(APP_ROUTES.PUBLIC.HOME.link, { 
           replace: true,
           state: { forceRefresh: true } // Puedes usar este estado para forzar recarga
         });
-        window.location.reload();
+        //window.location.reload();
       }
       
     } catch (error) {

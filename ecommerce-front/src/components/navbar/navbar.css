@@ -13,18 +13,8 @@
   text-align: center;
 }
 
-/*  @media (max-width: 596px) {
-  .row {
-    display: block;
+@media (min-width: 993px) {
+  .dropdown {
+    display: none;
   }
-  .container > .row > .form > form > .row > #inputcuston {
-    margin-top: 1em;
-  }
-
-  .container > .row > .form > form > .row > #button{
-    margin-top: 1em;
-  }
-
-
-  
-} */
+}

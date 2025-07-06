@@ -78,11 +78,14 @@ func (pc *ProductController) CreateProduct(c *gin.Context) {
             continue
         }
 
+        fmt.Println("esto es i: ",i)
         image := models.Image{
             Data:        imageBytes,
             ContentType: fileHeader.Header.Get("Content-Type"),
             IsPrimary:   i == 0,
         }
+
+        fmt.Println("esto es image: ",image)
 
         product.Images = append(product.Images, image)
     }
@@ -160,35 +163,57 @@ func (pc *ProductController) GetProducts(c *gin.Context) {
 
 func (pc *ProductController) GetProductsParams(c *gin.Context) {
     // 1. Inicialización y parámetros
+
     page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-    if page < 1 { page = 1 }
+    if page < 1 {
+        page = 1
+    }
 
-    pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
-    if pageSize < 1 || pageSize > 100 { pageSize = 10 }
+    pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+    if pageSize < 1 || pageSize > 21 {
+        pageSize = 10
+    }
 
-    // 2. Obtener parámetros
+    // 2. Obtener y limpiar parámetros
+    rawSearch := c.DefaultQuery("search", "")
+    searchParam := strings.TrimSpace(rawSearch)
+
+    // Eliminar comillas circundantes si existen
+    if len(searchParam) >= 2 && searchParam[0] == '"' && searchParam[len(searchParam)-1] == '"' {
+        searchParam = searchParam[1 : len(searchParam)-1]
+    }
+
+    // Convertir a minúscula
+    searchParam = strings.ToLower(searchParam)
+
     params := struct {
         Search   string
         SortBy   string
         Order    string
         Category string
         Stock    string
+        Images   bool
     }{
-        Search:   strings.TrimSpace(c.Query("search")),
+        Search:   searchParam,
         SortBy:   c.DefaultQuery("sort_by", "created_at"),
         Order:    strings.ToLower(c.DefaultQuery("order", "desc")),
-        Category: strings.TrimSpace(c.Query("category")),
+        Category: strings.TrimSpace(c.DefaultQuery("category", "")),
         Stock:    strings.TrimSpace(c.DefaultQuery("stock", "0")),
+        Images:   strings.ToLower(c.DefaultQuery("images", "true"))=="true",    
     }
+   
 
     // 3. Configurar consulta base
     dbQuery := pc.DB.Model(&models.Product{})
-
-    // 4. Aplicar filtros
+    offset := (page - 1) * pageSize
+    
+    // 4. Aplicar filtros (búsqueda insensible a mayúsculas/minúsculas)
     if params.Search != "" {
         search := "%" + params.Search + "%"
+        // Usar LOWER() en campos de la base de datos y en el parámetro de búsqueda
+        
         dbQuery = dbQuery.Where(
-            "name LIKE ? OR description LIKE ?", 
+            "LOWER(name) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?)", 
             search, 
             search,
         )
@@ -198,7 +223,7 @@ func (pc *ProductController) GetProductsParams(c *gin.Context) {
         dbQuery = dbQuery.Where("category = ?", params.Category)
     }
 
-    // 5. Filtro de stock mejorado
+    // 5. Filtro de stock
     if params.Stock != "" && params.Stock != "0" {
         switch params.Stock {
         case "in_stock":
@@ -214,7 +239,7 @@ func (pc *ProductController) GetProductsParams(c *gin.Context) {
 
     // 6. Ordenación segura
     validSortFields := map[string]bool{
-        "name": true, "price": true, "created_at": true, 
+        "name": true, "price": true, "created_at": true,
         "updated_at": true, "stock": true,
     }
 
@@ -228,36 +253,40 @@ func (pc *ProductController) GetProductsParams(c *gin.Context) {
 
     dbQuery = dbQuery.Order(fmt.Sprintf("%s %s", params.SortBy, params.Order))
 
-    // 7. Paginación
+    // 7. Contar el total antes de aplicar paginación
     var total int64
     if err := dbQuery.Count(&total).Error; err != nil {
         c.JSON(http.StatusInternalServerError, models.Response{
             Status: http.StatusInternalServerError,
             Error:  err.Error(),
-            Detail: "function GetProductsParams",
+            Detail: "Error counting products function GetProductsParams",
         })
         return
     }
 
-    offset := (page - 1) * pageSize
-    // Calcular total de páginas
-    totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
+    // 8. Aplicar paginación y obtener resultados
     var products []models.Product
+    dbQuery = dbQuery.Offset(offset).Limit(pageSize)
 
-    // 8. Ejecutar consulta (sin Preload primero para probar)
-    if err := dbQuery.Preload("Images").Offset(offset).Limit(pageSize).Find(&products).Error; err != nil {
-        c.JSON(http.StatusInternalServerError,models.Response{
-                Status: http.StatusInternalServerError,
-                Error:  err.Error(),
-                Detail: "function GetProductsParams",
-            })
+    if params.Images {
+        dbQuery = dbQuery.Preload("Images")
+    }
+
+    if err := dbQuery.Find(&products).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, models.Response{
+            Status: http.StatusInternalServerError,
+            Error:  err.Error(),
+            Detail: "Error fetching products function GetProductsParams",
+        })
         return
     }
 
-    //9. Respuesta
+    // 9. Calcular total de páginas
+    totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
 
+    // 10. Construir respuesta
     responseData := gin.H{
-        "products":   products,
+        "products": products,
         "pagination": gin.H{
             "current_page": page,
             "page_size":    pageSize,

@@ -151,15 +151,16 @@ func (ac *AuthController) GetMe(c *gin.Context) {
         return
     }
 
-    data:= gin.H{
+    /* data:= gin.H{
         "id": user.ID,
         "email": user.Email,
         "name": user.Name,
-    }
+        "is_admin": user.is_admin
+    } */
 
     c.JSON(http.StatusOK, models.Response{
         Status: http.StatusOK,
-        Data:   data,
+        Data:   user,
         //Data: user,
         Detail: "function GetMe",
     })

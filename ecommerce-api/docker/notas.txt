@@ -1,0 +1,4 @@
+
+docker build -t my-go-app .
+
+docker run -p 5000:5000 my-go-app

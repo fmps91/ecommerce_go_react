@@ -35,7 +35,7 @@ const ProductCard = ({ product }) => {
         <div className="d-flex justify-content-between">
           <button
             className="btn btn-sm btn-outline-primary"
-            onClick={() => navigate(`${APP_ROUTES.PUBLIC.PRODUCT_DETAIL.replace(':id', product?.ID)}`)}
+            onClick={() => navigate(`${APP_ROUTES.PUBLIC.PRODUCT_DETAIL.link.replace(':id', product?.ID)}`)}
           >
             <FaEye /> View
           </button>

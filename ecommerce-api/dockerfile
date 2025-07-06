@@ -1,0 +1,23 @@
+# Usa una imagen base de Alpine Linux con Go 1.23.3
+FROM golang:1.23.3-alpine3.19
+
+# Establece el directorio de trabajo dentro del contenedor
+WORKDIR /app
+
+# Copia los archivos go.mod y go.sum (si existen)
+COPY go.mod go.sum ./
+
+# Descarga las dependencias de Go
+RUN go mod download
+
+# Copia el resto del código fuente
+COPY . .
+
+# Compila la aplicación
+RUN go build -o /app/main .
+
+# Expone el puerto que necesite tu aplicación (ajusta según sea necesario)
+EXPOSE 5000
+
+# Comando para ejecutar la aplicación
+CMD ["/app/main"]

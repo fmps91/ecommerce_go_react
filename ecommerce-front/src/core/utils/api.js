@@ -5,37 +5,40 @@ import { toast } from 'react-toastify';
 const api = axios.create({
   baseURL: 'http://localhost:5000', // Cambia esto por tu backend real
   //timeout: 5000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 
 });
 
+const Content={
+  headers: {
+  'Content-Type': 'application/json'
+  }
+}
+
 // Petición GET
 export const get = (url, params = {}) => {
-  return api.get(url, { params });
+  return api.get(url, { params,...Content });
 };
 
 // Petición POST
-export const post = (url, data = {}) => {
-  return api.post(url, data);
+export const post = (url, data = {},config=Content) => {
+  return api.post(url, data, config);
 };
 
 // Petición PUT
-export const put = (url, data = {}) => {
-  return api.put(url, data);
+export const put = (url, data = {},config=Content) => {
+  return api.put(url, data, config);
 };
 
 // Petición DELETE
 export const del = (url, params = {}) => {
-  return axios.delete(url, { params });
+  return api.delete(url, { params,...Content });
 };
 
 
 api.interceptors.request.use((config) => {
   // Obtener el token del almacenamiento local o de sessionStorage
   //const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const data = JSON.parse(sessionStorage.getItem('user'));
+  const data = JSON.parse(localStorage.getItem('user'));
   //console.log("user: ",data)
 
   if (data) {
@@ -53,7 +56,7 @@ api.interceptors.response.use(
     // Manejar errores de autenticación
     if (error.response?.status === 401) {
       toast.error('Sesión expirada. Por favor ingrese nuevamente.');
-      sessionStorage.removeItem('token');
+      localStorage.removeItem('user');
       //window.location.href = '/login';
       
     }

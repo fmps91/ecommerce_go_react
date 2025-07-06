@@ -24,30 +24,31 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import ProfilePage from './pages/profile/ProfilePage';
 import ProductManagementPage from './pages/products/ProductManagementPage';
 import UserManagementPage from './pages/user/UserManagementPage';
+import GloblalRoute from './components/GlobalRoute';
 
 function App() {
   return (
     <>
-      <Routes>
-        <Route path={APP_ROUTES.PUBLIC.HOME} element={<ProductListPage />} />
-        <Route path={APP_ROUTES.PUBLIC.LOGIN} element={<LoginPage />} />
-        <Route path={APP_ROUTES.PUBLIC.REGISTER} element={<RegisterPage />} />
-        <Route path={APP_ROUTES.PUBLIC.PRODUCTS} element={<ProductListPage />} />
-        <Route path={APP_ROUTES.PUBLIC.PRODUCT_DETAIL} element={<ProductDetailPage />} />
-        
+      <Routes >
+      <Route element={<GloblalRoute />}>
+        <Route path={APP_ROUTES.PUBLIC.HOME.link} element={<ProductListPage />} />
+        <Route path={APP_ROUTES.PUBLIC.LOGIN.link} element={<LoginPage />} />
+        <Route path={APP_ROUTES.PUBLIC.REGISTER.link} element={<RegisterPage />} />
+        <Route path={APP_ROUTES.PUBLIC.PRODUCT_DETAIL.link} element={<ProductDetailPage />} />
+        </Route>
         <Route element={<PrivateRoute />}>
-          <Route path={APP_ROUTES.PRIVATE.CART} element={<CartPage />} />
-          <Route path={APP_ROUTES.PRIVATE.ORDERS} element={<OrdersPage />} />
-          <Route path={APP_ROUTES.PRIVATE.PROFILE} element={<ProfilePage />} />
+          <Route path={APP_ROUTES.PRIVATE.CART.link} element={<CartPage />} />
+          <Route path={APP_ROUTES.PRIVATE.ORDERS.link} element={<OrdersPage />} />
+          <Route path={APP_ROUTES.PRIVATE.PROFILE.link} element={<ProfilePage />} />
         </Route>
 
         <Route element={<AdminRoute />}>
-          <Route path={APP_ROUTES.ADMIN.DASHBOARD} element={<AdminDashboard />} />
-          <Route path={APP_ROUTES.ADMIN.PRODUCT_MANAGEMENT} element={<ProductManagementPage />} />
-          <Route path={APP_ROUTES.ADMIN.USER_MANAGEMENT} element={<UserManagementPage />} />
+          <Route path={APP_ROUTES.ADMIN.DASHBOARD.link} element={<AdminDashboard />} />
+          <Route path={APP_ROUTES.ADMIN.PRODUCT_MANAGEMENT.link} element={<ProductManagementPage />} />
+          <Route path={APP_ROUTES.ADMIN.USER_MANAGEMENT.link} element={<UserManagementPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to={APP_ROUTES.PUBLIC.HOME} />} />
+        <Route path="*" element={<Navigate to={APP_ROUTES.PUBLIC.HOME.link} />} />
       </Routes>
       <ToastContainer 
         position="bottom-center"

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_ROUTES } from '@/core/constants/api.routes';
 import { validarCampo } from '@/utils/validations';
+import { useApp } from '../../../../contexts/AppContext';
 
 export const useFormLogin = () => {
   const init = [
@@ -25,7 +26,7 @@ export const useFormLogin = () => {
 
   const [formData, setFormData] = useState(init);
   const [errors, setErrors] = useState({});
-  const { login } = useAuth();
+  const { login } = useApp()
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -63,11 +64,12 @@ export const useFormLogin = () => {
     //console.log("token: ",token)
     if (success) {
       //console.log("esta es la ruta: ",APP_ROUTES.PRIVATE.PROFILE)
-      navigate(APP_ROUTES.PUBLIC.PRODUCTS, { 
+      //window.location.reload();
+      navigate(APP_ROUTES.PUBLIC.HOME.link, { 
         replace: true,
         state: { forceRefresh: true } // Puedes usar este estado para forzar recarga
       });
-      window.location.reload();
+      
      
     }
   };

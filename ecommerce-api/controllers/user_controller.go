@@ -5,6 +5,10 @@ import (
     "github.com/fmps92/ecommerce-api/models"
     "github.com/gin-gonic/gin"
     "gorm.io/gorm"
+    "strings"
+    "strconv"
+    "fmt"
+
 )
 
 type UserController struct {
@@ -19,38 +23,106 @@ type UpdateUser struct {
     Name     string `json:"name" binding:"required"`
     Email    string `json:"email" binding:"required,email"`
     Password string `json:"password" binding:"required,min=8"`
-    IsAdmin  bool   `json:"is_admin""`
+    IsAdmin  bool   `json:"is_admin"`
 }
 
 
+
 func (uc *UserController) GetUsers(c *gin.Context) {
-    var pagination Pagination
-    if err := c.ShouldBindQuery(&pagination); err != nil {
-        c.JSON(http.StatusBadRequest, models.Response{
-            Status: http.StatusBadRequest,
-            Error:  "Invalid pagination parameters",
+    // Definimos la estructura de parámetros dentro de la función
+
+    page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+    if page < 1 {
+        page = 1
+    }
+
+    pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+    if pageSize < 1 || pageSize > 21 {
+        pageSize = 10
+    }
+
+    params := struct {
+        Name     string
+        SortBy   string
+        Order    string
+        Email    string
+        IsAdmin  string
+    }{
+        Name:     c.DefaultQuery("name", ""),
+        SortBy:   c.DefaultQuery("sort_by", "created_at"),
+        Order:    strings.ToLower(c.DefaultQuery("order", "desc")),
+        Email:    strings.ToLower(strings.TrimSpace(c.DefaultQuery("email", ""))),
+        IsAdmin:  strings.ToLower(strings.TrimSpace(c.DefaultQuery("isAdmin", ""))),    
+    }
+
+    // Iniciar la consulta
+    query := uc.DB.Model(&models.User{})
+    
+    // Aplicar filtros con LOWER para búsqueda case-insensitive
+    if params.Email != "" {
+        email := strings.ToLower(params.Email)
+        query = query.Where("LOWER(email) LIKE LOWER(?)", "%"+email+"%")
+    }
+    
+    if params.Name != "" {
+        name := strings.ToLower(params.Name)
+        query = query.Where("LOWER(name) LIKE LOWER(?)", "%"+name+"%")
+    }
+    
+    fmt.Println("isAdmin: ",params.IsAdmin)
+    if params.IsAdmin != "" {
+        query = query.Where("is_admin = ?", params.IsAdmin)
+    }
+    
+    query = query.Order(fmt.Sprintf("%s %s", params.SortBy, params.Order))
+
+    // Contar el total sin paginación para la metadata
+    var total int64
+    if err := query.Count(&total).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, models.Response{
+            Status: http.StatusInternalServerError,
+            Error:  err.Error(),
+            Detail: "Error counting products function GetProductsParams",
         })
         return
     }
 
-    var users []models.User
-    db, resp := pagination.Paginate(uc.DB, &users)
-    if resp != nil {
-        c.JSON(resp.Status, resp)
-        return
-    }
+    offset := (page - 1) * pageSize
+    query = query.Offset(offset).Limit(pageSize)
 
-    if err := db.Find(&users).Error; err != nil {
+    // Ejecutar la consulta
+    var users []models.User
+    if err := query.Find(&users).Error; err != nil {
         c.JSON(http.StatusInternalServerError, models.Response{
             Status: http.StatusInternalServerError,
             Error:  "Could not fetch users",
+            Detail: "function GetUsers",
         })
         return
     }
 
+    totalPages := (total + int64(pageSize) - 1) / int64(pageSize)
+
     c.JSON(http.StatusOK, models.Response{
         Status: http.StatusOK,
-        Data:   users,
+        Data: gin.H{
+            "users": users,
+            "pagination": gin.H{
+                "page":       page,
+                "pageSize":  pageSize,
+                "total_items":  total,
+                "total_pages": totalPages,
+            },
+            "sort": gin.H{
+                "by":    params.SortBy,
+                "order": params.Order,
+            },
+            "filters": gin.H{
+                "name":     params.Name,
+                "email":    params.Email,
+                "is_admin": params.IsAdmin,
+            },
+        },
         Detail: "function GetUsers",
     })
 }
@@ -82,8 +154,8 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
     if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, models.Response{
             Status: http.StatusBadRequest,
-            Error:  "Validation error",
-            Detail: err.Error(),
+            Error:  "Validation error: "+err.Error(),
+            Detail: "function UpdateUser",
         })
         return
     }
@@ -93,6 +165,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
         c.JSON(http.StatusNotFound, models.Response{
             Status: http.StatusNotFound,
             Error:  "User not found",
+            Detail: "function UpdateUser",
         })
         return
     }
@@ -108,6 +181,7 @@ func (uc *UserController) UpdateUser(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, models.Response{
             Status: http.StatusInternalServerError,
             Error:  "Could not update user",
+            Detail: "function UpdateUser",
         })
         return
     }
@@ -149,6 +223,7 @@ func (uc *UserController) DeleteUserDatabase(c *gin.Context) {
         c.JSON(http.StatusNotFound, models.Response{
             Status: http.StatusNotFound,
             Error:  "User not found",
+            Detail: "function DeleteUserDatabase",
         })
         return
     }
@@ -160,6 +235,7 @@ func (uc *UserController) DeleteUserDatabase(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, models.Response{
             Status: http.StatusInternalServerError,
             Error:  "Database error: " + result.Error.Error(),
+            Detail: "function DeleteUserDatabase",
         })
         return
     }
@@ -168,6 +244,7 @@ func (uc *UserController) DeleteUserDatabase(c *gin.Context) {
         c.JSON(http.StatusConflict, models.Response{
             Status: http.StatusConflict,
             Error:  "User could not be deleted (no rows affected)",
+            Detail: "function DeleteUserDatabase",
         })
         return
     }
@@ -175,10 +252,7 @@ func (uc *UserController) DeleteUserDatabase(c *gin.Context) {
     // 4. Respuesta exitosa
     c.JSON(http.StatusOK, models.Response{
         Status: http.StatusOK,
-        Data:   map[string]interface{}{
-            "message": "User deleted successfully",
-            "user_id": id,
-        },
-        Detail: "function DeleteUserDatabase",
+        Data:   "User deleted of database successfully",
+        Detail: "function  DeleteUserDatabase",
     })
 }

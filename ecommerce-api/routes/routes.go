@@ -5,14 +5,26 @@ import (
     "github.com/fmps92/ecommerce-api/middlewares"
     "github.com/gin-gonic/gin"
     "gorm.io/gorm"
+    "os"
+
 )
 
 
 func SetupRoutes(db *gorm.DB, corsMiddleware gin.HandlerFunc) *gin.Engine {
     r := gin.Default()
     
+    //route check server
+    r.GET("/", func(c *gin.Context) {
+        c.JSON(200, gin.H{
+            "status":  200,
+            "message": "ok",
+        })
+    })
+
     // Aplicar el middleware CORS
     r.Use(corsMiddleware)
+
+    api := os.Getenv("SERVER_VERSION")
     
     // Initialize controllers
     authController := controllers.NewAuthController(db)
@@ -21,7 +33,7 @@ func SetupRoutes(db *gorm.DB, corsMiddleware gin.HandlerFunc) *gin.Engine {
     orderController := controllers.NewOrderController(db)
 
     // Auth routes
-    auth := r.Group("/auth")
+    auth := r.Group(api+"/auth")
     {
         auth.POST("/signup", authController.SignUpUser)
         auth.POST("/signin", authController.SignInUser)
@@ -32,7 +44,7 @@ func SetupRoutes(db *gorm.DB, corsMiddleware gin.HandlerFunc) *gin.Engine {
     }
 
     // User routes
-	user := r.Group("/users")
+	user := r.Group(api+"/users")
     user.Use(middlewares.JWTMiddleware())
     {
         user.GET("/me", authController.GetMe)
@@ -44,10 +56,10 @@ func SetupRoutes(db *gorm.DB, corsMiddleware gin.HandlerFunc) *gin.Engine {
     }
 
     // Product routes
-    product := r.Group("/products")
+    product := r.Group(api+"/products")
     {
         product.GET("", productController.GetProducts)
-        product.GET("params",productController.GetProductsParams)
+        product.GET("/params",productController.GetProductsParams)
         product.GET("/:id", productController.GetProduct)
         
         // Protected routes
@@ -62,7 +74,7 @@ func SetupRoutes(db *gorm.DB, corsMiddleware gin.HandlerFunc) *gin.Engine {
     }
 
     // Order routes
-    order := r.Group("/orders")
+    order := r.Group(api+"/orders")
     order.Use(middlewares.JWTMiddleware())
     {
         order.POST("", orderController.CreateOrder)
@@ -77,10 +89,6 @@ func SetupRoutes(db *gorm.DB, corsMiddleware gin.HandlerFunc) *gin.Engine {
             order.DELETE("/custom/:id", orderController.DeleteOrderDatabase)
         }
     }
-
-    /* r.OPTIONS("/*any", func(c *gin.Context) {
-		c.Status(204) // Respuesta vacía para OPTIONS
-	}) */
 
     return r
 }

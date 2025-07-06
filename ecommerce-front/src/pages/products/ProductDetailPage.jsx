@@ -68,7 +68,7 @@ const ProductDetailPage = () => {
 
       <button
         className="btn btn-outline-secondary mb-4"
-        onClick={() => navigate(APP_ROUTES.PUBLIC.PRODUCTS)}
+        onClick={() => navigate(APP_ROUTES.PUBLIC.HOME.link)}
       >
         <FaArrowLeft /> Back to Products
       </button>

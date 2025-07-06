@@ -27,7 +27,7 @@ func main() {
     fmt.Println("routes init")
 
     // Start server
-    port := os.Getenv("PORT")
+    port := os.Getenv("SERVER_PORT")
 
     if port == "" {
         port = "5000" // Puerto por defecto
@@ -35,8 +35,9 @@ func main() {
 
     //v := utils.GetCorsConfig()
 
+    api := os.Getenv("SERVER_VERSION")
     
-    fmt.Println("http://localhost:"+port)
+    fmt.Println("http://localhost:"+port+""+api)
     // Corrección: Solo usa el puerto, no la URL completa
     r.Run("localhost:"+port) // Escucha solo en localhost
     
